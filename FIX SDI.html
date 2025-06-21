@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebGIS Dashboard</title>
+
+  <!-- Leaflet JS & CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Leaflet AJAX plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-ajax@0.0.1/leaflet.ajax.min.js"></script>
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <style>
+    #map {
+      height: 100vh;
+      width: 70%;
+    }
+    .sidebar {
+      width: 250px;
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: #2d3748;
+      padding: 20px;
+      color: white;
+    }
+    .content {
+      margin-left: 250px;
+      padding: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    /* Style for GeoJSON markers */
+    .school-icon {
+      background-color: red;
+      border-radius: 50%;
+      width: 10px;
+      height: 10px;
+      border: 1px solid black;
+    }
+    .other-icon {
+      background-color: blue;
+      border-radius: 50%;
+      width: 10px;
+      height: 10px;
+      border: 1px solid black;
+    }
+    .legend {
+      padding: 10px;
+      background: white;
+      background: rgba(255,255,255,0.8);
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      border-radius: 5px;
+      line-height: 1.5;
+    }
+    .legend h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2 class="text-xl font-semibold mb-5">
+      Fasilitas Pendidikan Dasar dan Menengah Kab. Gunungkidul
+    </h2>
+    <ul class="space-y-4">
+      <li>
+        <button id="mapBtn" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white">
+          Maps
+        </button>
+      </li>
+      <li>
+        <button id="dbBtn" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md text-white">
+          Database
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Content Area -->
+  <div class="content">
+    <!-- Map Section -->
+    <div id="mapSection" class="hidden">
+      <div id="map"></div>
+    </div>
+
+    <!-- Database Section -->
+    <div id="dbSection" class="hidden">
+      <h3 class="text-2xl font-semibold mb-5">Download Data</h3>
+      <p class="mb-4">Klik tombol di bawah untuk mengunduh data dalam format PDF.</p>
+       <div class="space-y-3">
+      <button id="downloadkecamatanpanggang" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Panggang
+      </button>
+      <button id="downloadkecamatanpaliyan" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Paliyan
+      </button>
+      <button id="downloadkecamatansaptosari" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Saptosari
+      </button>
+       <button id="downloadkecamatantepus" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Tepus
+      </button>
+      <button id="downloadkecamatantanjungsari" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Tanjungsari
+      </button>
+      <button id="downloadkecamatanrongkop" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Rongkop
+      </button>
+      <button id="downloadkecamatansemanu" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Semanu
+      </button>
+      <button id="downloadkecamatanponjong" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Ponjong
+      </button>
+      <button id="downloadkecamatangirisubo" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Girisubo
+      </button>
+      <button id="downloadkecamatanpurwosari" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Purwosari
+      </button>
+      <button id="downloadkecamatankarangmojo" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Karangmojo
+      </button>
+      <button id="downloadkecamatanwonosari" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Wonosari
+      </button>
+       <button id="downloadkecamatanplayen" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Playen
+      </button>
+      <button id="downloadkecamatanpatuk" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Patuk
+      </button>
+      <button id="downloadkecamatangedangsari" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Gedangsari
+      </button>
+      <button id="downloadkecamatannglipar" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Nglipar
+      </button>
+      <button id="downloadkecamatanngawen" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Ngawen
+      </button>
+      <button id="downloadkecamatansemin" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-md text-white">
+        Download Kecamatan Semin
+      </button>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Toggle Sections
+    document.getElementById("mapBtn").addEventListener("click", function () {
+      document.getElementById("mapSection").classList.remove("hidden");
+      document.getElementById("dbSection").classList.add("hidden");
+      initializeMap();
+    });
+
+    document.getElementById("dbBtn").addEventListener("click", function () {
+      document.getElementById("mapSection").classList.add("hidden");
+      document.getElementById("dbSection").classList.remove("hidden");
+    });
+
+    // Initialize Leaflet Map with GeoJSON
+    function initializeMap() {
+      const map = L.map("map").setView([-7.977, 110.367], 12);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      // Your GeoJSON data
+      const geojsonData = {
+       "type": "FeatureCollection",
+"name": "PANGGANG",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "MIS MUHAMMADIYAH MACANMATI", "Y": -8.0398794, "X": 110.4460031 }, "geometry": { "type": "Point", "coordinates": [ 110.4460031, -8.0398794 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "MIS YAPPI PIJENAN", "Y": -8.9419898, "X": 110.6202725 }, "geometry": { "type": "Point", "coordinates": [ 110.6202725, -8.9419898 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "MTSS PDHI GIRIKARTO", "Y": -8.0706059, "X": 110.4540465 }, "geometry": { "type": "Point", "coordinates": [ 110.4540465, -8.0706059 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SD IT BINA INSANI PANGGANG", "Y": -8.022282, "X": 110.390437 }, "geometry": { "type": "Point", "coordinates": [ 110.390437, -8.022282 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN BANYUMENENG PANGGANG", "Y": -7.983602, "X": 110.4024247 }, "geometry": { "type": "Point", "coordinates": [ 110.4024247, -7.983602 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN BIBAL PANGGANG", "Y": -7.983602, "X": 110.4024247 }, "geometry": { "type": "Point", "coordinates": [ 110.4024247, -7.983602 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN GIRIKARTO PANGGANG", "Y": -8.0717906, "X": 110.4182266 }, "geometry": { "type": "Point", "coordinates": [ 110.4182266, -8.0717906 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN GIRIMULYO PANGGANG", "Y": -8.04628, "X": 110.43371 }, "geometry": { "type": "Point", "coordinates": [ 110.43371, -8.04628 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN GIRISEKAR PANGGANG", "Y": -8.0351165, "X": 110.4621337 }, "geometry": { "type": "Point", "coordinates": [ 110.4621337, -8.0351165 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN GIRISUKO PANGGANG", "Y": -8.0055966, "X": 110.4092821 }, "geometry": { "type": "Point", "coordinates": [ 110.4092821, -8.0055966 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN LEGUNDI I PANGGANG", "Y": -8.0356379, "X": 110.4359696 }, "geometry": { "type": "Point", "coordinates": [ 110.4359696, -8.0356379 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN LEGUNDI II PANGGANG", "Y": -8.036497, "X": 110.4306583 }, "geometry": { "type": "Point", "coordinates": [ 110.4306583, -8.036497 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PACAR PANGGANG", "Y": -8.00273, "X": 110.46771 }, "geometry": { "type": "Point", "coordinates": [ 110.46771, -8.00273 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PANGGANG I PANGGANG", "Y": -8.0157971, "X": 110.3859378 }, "geometry": { "type": "Point", "coordinates": [ 110.3859378, -8.0157971 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PANGGANG II PANGGANG", "Y": -8.0142273, "X": 110.4200187 }, "geometry": { "type": "Point", "coordinates": [ 110.4200187, -8.0142273 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PANGGANG III PANGGANG", "Y": -8.9588128, "X": 110.2853184 }, "geometry": { "type": "Point", "coordinates": [ 110.2853184, -8.9588128 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PEJATEN PANGGANG", "Y": -8.0408601, "X": 110.421552 }, "geometry": { "type": "Point", "coordinates": [ 110.421552, -8.0408601 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN SAWAH III PANGGANG", "Y": 8.0507626, "X": 110.4560021 }, "geometry": { "type": "Point", "coordinates": [ 110.4560021, 8.0507626 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN SAWAH PANGGANG", "Y": -8.0508644, "X": 110.4550537 }, "geometry": { "type": "Point", "coordinates": [ 110.4550537, -8.0508644 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN TEMUIRENG I PANGGANG", "Y": -7.9999713, "X": 110.4574494 }, "geometry": { "type": "Point", "coordinates": [ 110.4574494, -7.9999713 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN TEMUIRENG II PANGGANG", "Y": -8.0116304, "X": 110.4204016 }, "geometry": { "type": "Point", "coordinates": [ 110.4204016, -8.0116304 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN TURUNAN PANGGANG", "Y": -7.97846, "X": 110.4332 }, "geometry": { "type": "Point", "coordinates": [ 110.4332, -7.97846 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN WILOSO I PANGGANG", "Y": -8.0710874, "X": 110.4411692 }, "geometry": { "type": "Point", "coordinates": [ 110.4411692, -8.0710874 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN WILOSO II PANGGANG", "Y": -8.06291, "X": 110.43144 }, "geometry": { "type": "Point", "coordinates": [ 110.43144, -8.06291 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP BINA MUDA PANGGANG", "Y": -8.0162578, "X": 110.4174089 }, "geometry": { "type": "Point", "coordinates": [ 110.4174089, -8.0162578 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP MUHAMMADIYAH PANGGANG", "Y": -8.0162578, "X": 110.4174089 }, "geometry": { "type": "Point", "coordinates": [ 110.4174089, -8.0162578 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP NEGERI 1 PANGGANG", "Y": -8.0198908, "X": 110.4205531 }, "geometry": { "type": "Point", "coordinates": [ 110.4205531, -8.0198908 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP NEGERI 2 PANGGANG", "Y": -8.0332549, "X": 110.4658149 }, "geometry": { "type": "Point", "coordinates": [ 110.4658149, -8.0332549 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP NEGERI 3 PANGGANG", "Y": -7.9993812, "X": 110.4620754 }, "geometry": { "type": "Point", "coordinates": [ 110.4620754, -7.9993812 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP NEGERI 4 PANGGANG", "Y": -8.06345, "X": 110.2914743 }, "geometry": { "type": "Point", "coordinates": [ 110.2914743, -8.06345 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP NEGERI 5 PANGGANG", "Y": -7.9763614, "X": 110.4168928 }, "geometry": { "type": "Point", "coordinates": [ 110.4168928, -7.9763614 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SLBS SEKAR HANDAYANI", "Y": -8.0368085, "X": 110.4576345 }, "geometry": { "type": "Point", "coordinates": [ 110.4576345, -8.0368085 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMAN 1 PANGGANG", "Y": -8.0221237, "X": 110.4209916 }, "geometry": { "type": "Point", "coordinates": [ 110.4209916, -8.0221237 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "MIS MUHAMMADIYAH SODO", "Y": -8.0089118, "X": 110.5575119 }, "geometry": { "type": "Point", "coordinates": [ 110.5575119, -8.0089118 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "MIS MUHAMMADIYAH TRUKAN", "Y": -8.0062573, "X": 110.5320406 }, "geometry": { "type": "Point", "coordinates": [ 110.5320406, -8.0062573 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "MIS YAPPI BANJARAN", "Y": -8.0505259, "X": 110.5212401 }, "geometry": { "type": "Point", "coordinates": [ 110.5212401, -8.0505259 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "MIS YAPPI MULUSAN", "Y": -8.0099815, "X": 110.5522829 }, "geometry": { "type": "Point", "coordinates": [ 110.5522829, -8.0099815 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "MTSS MUHAMMADIYAH SODO", "Y": -8.0026124, "X": 110.5608014 }, "geometry": { "type": "Point", "coordinates": [ 110.5608014, -8.0026124 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "MTSS YAPPI MULUSAN PALIYAN", "Y": -8.0099815, "X": 110.5522829 }, "geometry": { "type": "Point", "coordinates": [ 110.5522829, -8.0099815 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SD KI AGENG GIRING PALIYAN", "Y": -8.0415586, "X": 110.5559353 }, "geometry": { "type": "Point", "coordinates": [ 110.5559353, -8.0415586 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SD MUHAMMADIYAH GROGOL PALIYAN", "Y": -7.9791097, "X": 110.5377393 }, "geometry": { "type": "Point", "coordinates": [ 110.5377393, -7.9791097 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SD MUHAMMADIYAH KARANGDUWET PALIYAN", "Y": -8.00667, "X": 110.49731 }, "geometry": { "type": "Point", "coordinates": [ 110.49731, -8.00667 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SD MUHAMMADIYAH MULUSAN I PALIYAN", "Y": -8.0049067, "X": 110.5430119 }, "geometry": { "type": "Point", "coordinates": [ 110.5430119, -8.0049067 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SD MUHAMMADIYAH MULUSAN II PALIYAN", "Y": -8.0003229, "X": 110.5381841 }, "geometry": { "type": "Point", "coordinates": [ 110.5381841, -8.0003229 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SD SANJAYA GIRING PALIYAN", "Y": -8.0642538, "X": 110.5517914 }, "geometry": { "type": "Point", "coordinates": [ 110.5517914, -8.0642538 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN GIRING PALIYAN", "Y": -8.0153569, "X": 110.5276002 }, "geometry": { "type": "Point", "coordinates": [ 110.5276002, -8.0153569 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN KARANGASEM PALIYAN", "Y": -8.0069135, "X": 110.5252053 }, "geometry": { "type": "Point", "coordinates": [ 110.5252053, -8.0069135 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN KARANGMOJO II PALIYAN", "Y": -7.9804216, "X": 110.5381735 }, "geometry": { "type": "Point", "coordinates": [ 110.5381735, -7.9804216 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN MULUSAN PALIYAN", "Y": -8.009234, "X": 110.5462779 }, "geometry": { "type": "Point", "coordinates": [ 110.5462779, -8.009234 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PALIYAN I PALIYAN", "Y": -8.0030917, "X": 110.50485 }, "geometry": { "type": "Point", "coordinates": [ 110.50485, -8.0030917 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PALIYAN II PALIYAN", "Y": -8.0012828, "X": 110.5006013 }, "geometry": { "type": "Point", "coordinates": [ 110.5006013, -8.0012828 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PALIYAN III PALIYAN", "Y": -8.0542262, "X": 110.5525013 }, "geometry": { "type": "Point", "coordinates": [ 110.5525013, -8.0542262 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PALIYAN IV PALIYAN", "Y": -8.0049006, "X": 110.5040774 }, "geometry": { "type": "Point", "coordinates": [ 110.5040774, -8.0049006 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PALIYAN V PALIYAN", "Y": -8.0050869, "X": 110.519314 }, "geometry": { "type": "Point", "coordinates": [ 110.519314, -8.0050869 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PAMPANG I PALIYAN", "Y": -7.9884287, "X": 110.5422358 }, "geometry": { "type": "Point", "coordinates": [ 110.5422358, -7.9884287 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PAMPANG II PALIYAN", "Y": -7.9884287, "X": 110.5422358 }, "geometry": { "type": "Point", "coordinates": [ 110.5422358, -7.9884287 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN PELEMGEDE PALIYAN", "Y": -8.0023611, "X": 110.5604004 }, "geometry": { "type": "Point", "coordinates": [ 110.5604004, -8.0023611 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN SODO PALIYAN", "Y": -8.0026437, "X": 110.5612692 }, "geometry": { "type": "Point", "coordinates": [ 110.5612692, -8.0026437 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SDN TROWONO I PALIYAN", "Y": -8.0026437, "X": 110.5612692 }, "geometry": { "type": "Point", "coordinates": [ 110.5612692, -8.0026437 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP MUHAMMADIYAH 1 PALIYAN", "Y": -7.9788151, "X": 110.5378065 }, "geometry": { "type": "Point", "coordinates": [ 110.5378065, -7.9788151 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP MUHAMMADIYAH 2 PALIYAN", "Y": -8.0014829, "X": 110.5132233 }, "geometry": { "type": "Point", "coordinates": [ 110.5132233, -8.0014829 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP NEGERI 1 PALIYAN", "Y": -8.0014829, "X": 110.5132233 }, "geometry": { "type": "Point", "coordinates": [ 110.5132233, -8.0014829 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SMP NEGERI 2 PALIYAN", "Y": -8.0681322, "X": 110.5507495 }, "geometry": { "type": "Point", "coordinates": [ 110.5507495, -8.0681322 ] } },
+{ "type": "Feature", "properties": { "NAMA SEKOLAH": "SLB Krida Mulia II", "Y": -8.0046226, "X": 110.5142637 }, "geometry": { "type": "Point", "coordinates": [ 110.5142637, -8.0046226 ] } }
+]      
+};
+
+      // Function to create custom markers
+      function pointToLayer(feature, latlng) {
+        // Determine marker color based on properties
+        const isSchool = feature.properties.field_3 === 'sekolah';
+        const markerColor = isSchool ? 'red' : 'blue';
+        
+        // Create circle marker
+        return L.circleMarker(latlng, {
+          radius: 8,
+          fillColor: markerColor,
+          color: '#000',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8
+        });
+      }
+
+      // Function to bind popup to each feature
+      function onEachFeature(feature, layer) {
+        if (feature.properties) {
+    let popupContent = `<div><strong>Koordinat:</strong> ${feature.properties.X}, ${feature.properties.Y}`;
+    
+    if (feature.properties["NAMA SEKOLAH"]) {
+      popupContent += `<br><strong>Nama Sekolah:</strong> ${feature.properties["NAMA SEKOLAH"]}`;
+          }
+          
+          popupContent += '</div>';
+          layer.bindPopup(popupContent);
+        }
+      }
+
+      // Add GeoJSON to map
+      L.geoJSON(geojsonData, {
+        pointToLayer: pointToLayer,
+        onEachFeature: onEachFeature
+      }).addTo(map);
+
+      // Add legend
+      const legend = L.control({position: 'bottomright'});
+      
+      legend.onAdd = function(map) {
+        const div = L.DomUtil.create('div', 'legend');
+        div.innerHTML = `
+          <h4>Legenda</h4>
+          <div><span style="background: blue; width: 15px; height: 15px; display: inline-block; border-radius: 50%; border: 1px solid #000;"></span> Sekolah</div>
+        `;
+        return div;
+      };
+      
+      legend.addTo(map);
+    }
+
+    // CSV Download Buttons (all buttons remain unchanged)
+    document.getElementById("downloadkecamatanpanggang").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Panggang.pdf";
+      link.download = "data-kecamatan-panggang.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatanpaliyan").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Paliyan.pdf";
+      link.download = "data-kecamatan-paliyan.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatansaptosari").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Saptosari.pdf";
+      link.download = "data-kecamatan-saptosari.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatantepus").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Tepus.pdf";
+      link.download = "data-kecamatan-tepus.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatantanjungsari").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Tanjungsari.pdf";
+      link.download = "data-kecamatan-tanjungsari.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatanrongkop").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Rongkop.pdf";
+      link.download = "data-kecamatan-rongkop.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatansemanu").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Semanu.pdf";
+      link.download = "data-kecamatan-semanu.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatanponjong").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Ponjong.pdf";
+      link.download = "data-kecamatan-ponjong.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatangirisubo").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Girisubo.pdf";
+      link.download = "data-kecamatan-girisubo.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatankarangmojo").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Karangmojo.pdf";
+      link.download = "data-kecamatan-karangmojo.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatanwonosari").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Wonosari.pdf";
+      link.download = "data-kecamatan-wonosari.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatanpatuk").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Patuk.pdf";
+      link.download = "data-kecamatan-patuk.pdf";
+      link.click();
+    });
+
+     document.getElementById("downloadkecamatanplayen").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Playen.pdf";
+      link.download = "data-kecamatan-playen.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatangedangsari").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Gedangsari.pdf";
+      link.download = "data-kecamatan-gedangsari.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatannglipar").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Nglipar.pdf";
+      link.download = "data-kecamatan-nglipar.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatanngawen").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Ngawen.pdf";
+      link.download = "data-kecamatan-ngawen.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatansemin").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Semin.pdf";
+      link.download = "data-kecamatan-semin.pdf";
+      link.click();
+    });
+
+    document.getElementById("downloadkecamatanpurwosari").addEventListener("click", function () {
+      const link = document.createElement("a");
+      link.href = "data/Purwosari.pdf";
+      link.download = "data-kecamatan-purwosari.pdf";
+      link.click();
+    });
+  </script>
+</body>
+</html>
